@@ -1,3 +1,7 @@
 target/
 .idea/
 .idea/workspace.xml
+Andrew-Yang-P0.iml
+src/test/
+src/output.txt
+.gitignore
