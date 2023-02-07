@@ -1,10 +1,8 @@
 import com.revature.controllers.*;
-import com.revature.model.*;
+import com.revature.model.EmployeeStatus;
+import com.revature.utils.ConnectionUtil;
 import com.sun.net.httpserver.HttpServer;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -22,6 +20,8 @@ public class App {
         server.createContext("/user-ticket", new UserTicket());
         server.createContext("/manage-tickets", new ManageTickets());  // For managers
         server.createContext("/your-tickets", new YourTickets());      // For employees
+
+        ConnectionUtil.getConnection();
 
         // Run the server
         server.setExecutor(null);
