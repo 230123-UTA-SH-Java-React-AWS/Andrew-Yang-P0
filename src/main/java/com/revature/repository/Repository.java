@@ -57,7 +57,7 @@ public class Repository {
 
             // If the ResultSet does not contain any data, then the person was not
             // in the table to begin with.
-            if (!r.isBeforeFirst()) {
+            if (!r.next()) {
                 return retP;
             }
 
@@ -78,7 +78,7 @@ public class Repository {
 
         return retP;
     }
-    public Person getPersonFromID(int id) {
+    private Person getPersonFromID(int id) {
         Person retP = null;
         PreparedStatement ps;
         ResultSet r;
@@ -137,8 +137,6 @@ public class Repository {
     }
     public List<Ticket> getTickets(Person p) {
         List<Ticket> tickets = null;
-        StringBuilder sql = new StringBuilder();
-        ObjectMapper mapper = new ObjectMapper();
         PreparedStatement ps;
         ResultSet rs;
 
@@ -147,7 +145,6 @@ public class Repository {
             return null;
         }
 
-        System.out.println(p);
         switch (p.getEmployeeStatusString()) {
             case "EMPLOYEE":
                 try {
@@ -181,6 +178,80 @@ public class Repository {
                 return null;
         }
         return tickets;
+    }
+    private Ticket getTicketFromID(int id){
+        PreparedStatement ps;
+        ResultSet rs;
+        Ticket t = new Ticket();
+
+        try {
+            ps = ConnectionUtil.getConnection().prepareStatement("SELECT * FROM Ticket WHERE (ticketID = ?)");
+            ps.setInt(1, id);
+            rs = ps.executeQuery();
+
+            if (!rs.next()) {
+                return null;
+            }
+
+            t.setTicketID(rs.getInt("ticketID"));
+            t.setDescription(rs.getString("ticketDesc"));
+            t.setTicketStatusString(rs.getString("ticketStatus"));
+            t.setAmount(rs.getInt("ticketAmount"));
+            t.setPersonID(rs.getInt("personID"));
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return t;
+
+    }
+    public boolean modifyTicket(TicketModifer tMod) {
+        // Build the SQL string to insert the person into the database
+        String sql = "UPDATE Ticket SET ticketStatus = ? " +
+                " WHERE ticketID = ?";
+
+        // Checks if the person is a manager based on the person ID
+        Person p = getPersonFromID(tMod.getPersonID());
+        switch (p.getEmployeeStatusString()) {
+            case "MANAGER":
+                break;
+            default:
+                return false;
+        }
+
+        // Verify that the ticket has been created in the database
+        Ticket t = getTicketFromID(tMod.getTicketID());
+        if (t == null) {
+            return false;
+        }
+
+        // Check if the ticket is in the PENDING status, else then return false because
+        // it has already been modified
+        switch (t.getTicketStatusString()) {
+            case "PENDING":
+                break;
+            default:
+                return false;
+        }
+
+        // Modify the ticket
+        try (Connection con = ConnectionUtil.getConnection()) {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, tMod.getTicketStatusString());
+            ps.setInt(2, tMod.getTicketID());
+
+            ps.execute();
+        }
+
+        // Throws exception for things SQL related
+        catch (SQLException exception) {
+            exception.printStackTrace();
+            return false;
+        }
+
+        // Success from modifying the ticket
+        return true;
+
     }
 
     // Generates a list of tickets when the user wants to retrieve them.

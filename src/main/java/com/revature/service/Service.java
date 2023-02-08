@@ -5,8 +5,11 @@ import com.revature.repository.*;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import com.google.gson.*;
 
 // Responsible for hold behavior driven classes
 public class Service {
@@ -157,6 +160,28 @@ public class Service {
             e.printStackTrace();
             returnStatement.add(false);
             returnStatement.add("Could not retrieve your tickets from the database.");
+        }
+        return returnStatement;
+    }
+    public LinkedList<Object> modifyTickets(String acctJson) {
+        returnStatement = new LinkedList<>();
+        TicketModifer tMod = new TicketModifer();
+
+        try {
+            tMod = mapper.readValue(acctJson, TicketModifer.class);
+            if (!repo.modifyTicket(tMod)) {
+                returnStatement.add(false);
+                returnStatement.add("Ticket ID [" + tMod.getTicketID() + "] cannot be modified");
+            }
+            else {
+                returnStatement.add(true);
+                returnStatement.add("Ticket ID [" + tMod.getTicketID() + "] has been " + tMod.getTicketStatusString());
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            returnStatement.add(false);
+            returnStatement.add("Something happened when trying to modify Ticket ID: " + tMod.getTicketID());
         }
         return returnStatement;
     }
